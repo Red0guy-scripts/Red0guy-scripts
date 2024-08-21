@@ -1,0 +1,146 @@
+local fov = 100
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local Cam = game.Workspace.CurrentCamera
+
+local FOVring = Drawing.new("Circle")
+FOVring.Visible = false
+FOVring.Thickness = 2
+FOVring.Color = Color3.fromRGB(128, 0, 128) -- Purple color
+FOVring.Filled = false
+FOVring.Radius = fov
+FOVring.Position = Cam.ViewportSize / 2
+
+local aimAssistEnabled = false
+local teamCheckEnabled = false
+local wallCheckEnabled = false
+
+-- Create GUI elements
+local AimAssistGui = Instance.new("ScreenGui")
+AimAssistGui.ResetOnSpawn = false
+AimAssistGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+local BackgroundFrame = Instance.new("Frame")
+BackgroundFrame.Size = UDim2.new(0, 220, 0, 170)
+BackgroundFrame.Position = UDim2.new(0, 10, 0, 10)
+BackgroundFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+BackgroundFrame.BackgroundTransparency = 0.3
+BackgroundFrame.BorderSizePixel = 0
+BackgroundFrame.Parent = AimAssistGui
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 12)
+UICorner.Parent = BackgroundFrame
+
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Size = UDim2.new(0, 200, 0, 50)
+ToggleButton.Position = UDim2.new(0, 10, 0, 10)
+ToggleButton.Text = "Enable Aimlock"
+ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+ToggleButton.Parent = BackgroundFrame
+
+local TeamCheckButton = Instance.new("TextButton")
+TeamCheckButton.Size = UDim2.new(0, 200, 0, 50)
+TeamCheckButton.Position = UDim2.new(0, 10, 0, 70)
+TeamCheckButton.Text = "Enable Team Check"
+TeamCheckButton.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+TeamCheckButton.Parent = BackgroundFrame
+
+local WallCheckButton = Instance.new("TextButton")
+WallCheckButton.Size = UDim2.new(0, 200, 0, 50)
+WallCheckButton.Position = UDim2.new(0, 10, 0, 130)
+WallCheckButton.Text = "Enable Wall Check"
+WallCheckButton.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+WallCheckButton.Parent = BackgroundFrame
+
+local function updateDrawings()
+    local camViewportSize = Cam.ViewportSize
+    FOVring.Position = camViewportSize / 2
+end
+
+local function lookAt(target)
+    local lookVector = (target - Cam.CFrame.Position).unit
+    local newCFrame = CFrame.new(Cam.CFrame.Position, Cam.CFrame.Position + lookVector)
+    Cam.CFrame = newCFrame
+end
+
+local function isWallBetween(targetPosition)
+    local ray = Ray.new(Cam.CFrame.Position, (targetPosition - Cam.CFrame.Position).unit * 1000)
+    local part, _ = workspace:FindPartOnRay(ray, Players.LocalPlayer.Character, false, true)
+    return part and part:IsDescendantOf(workspace)
+end
+
+local function getClosestPlayerInFOV(trg_part)
+    local nearest = nil
+    local last = math.huge
+    local playerMousePos = Cam.ViewportSize / 2
+    local localPlayer = Players.LocalPlayer
+    local localTeam = localPlayer.Team
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= localPlayer and (not teamCheckEnabled or player.Team ~= localTeam) then
+            local part = player.Character and player.Character:FindFirstChild(trg_part)
+            if part then
+                local ePos, isVisible = Cam:WorldToViewportPoint(part.Position)
+                local distance = (Vector2.new(ePos.x, ePos.y) - playerMousePos).Magnitude
+
+                if distance < last and isVisible and distance < fov and (not wallCheckEnabled or not isWallBetween(part.Position)) then
+                    last = distance
+                    nearest = player
+                end
+            end
+        end
+    end
+
+    return nearest
+end
+
+RunService.RenderStepped:Connect(function()
+    if aimAssistEnabled then
+        updateDrawings()
+        local closest = getClosestPlayerInFOV("Head")
+        if closest and closest.Character:FindFirstChild("Head") then
+            lookAt(closest.Character.Head.Position)
+        end
+    end
+end)
+
+-- Toggle button functionality for Aimlock
+ToggleButton.MouseButton1Click:Connect(function()
+    aimAssistEnabled = not aimAssistEnabled
+    FOVring.Visible = aimAssistEnabled
+
+    if aimAssistEnabled then
+        ToggleButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0) -- Red when enabled
+        ToggleButton.Text = "Disable Aimlock"
+    else
+        ToggleButton.BackgroundColor3 = Color3.fromRGB(0, 170, 0) -- Green when disabled
+        ToggleButton.Text = "Enable Aimlock"
+    end
+end)
+
+-- Toggle button functionality for Team Check
+TeamCheckButton.MouseButton1Click:Connect(function()
+    teamCheckEnabled = not teamCheckEnabled
+
+    if teamCheckEnabled then
+        TeamCheckButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0) -- Red when enabled
+        TeamCheckButton.Text = "Disable Team Check"
+    else
+        TeamCheckButton.BackgroundColor3 = Color3.fromRGB(0, 170, 0) -- Green when disabled
+        TeamCheckButton.Text = "Enable Team Check"
+    end
+end)
+
+-- Toggle button functionality for Wall Check
+WallCheckButton.MouseButton1Click:Connect(function()j
+    wallCheckEnabled = not wallCheckEnabled
+
+    if wallCheckEnabled then
+        WallCheckButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0) -- Red when enabled
+        WallCheckButton.Text = "Disable Wall Check"
+    else
+        WallCheckButton.BackgroundColor3 = Color3.fromRGB(0, 170, 0) -- Green when disabled
+        WallCheckButton.Text = "Enable Wall Check"
+    end
+end)
