@@ -1,3 +1,4 @@
+-- Section 1: Aimlock with FOV ring
 local fov = 60 -- FOV for aimlock
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
@@ -106,7 +107,7 @@ local keyEntered = false -- Variable to track if the correct key has been entere
 
 AimlockButton.MouseButton1Click:Connect(function()
     if not keyEntered then
-        showError("Wrong code, try again")
+        showError("sorry you need to get the code")
         return
     end
 
@@ -129,7 +130,7 @@ end)
 
 AutoLockButton.MouseButton1Click:Connect(function()
     if not keyEntered then
-        showError("Wrong code, try again")
+        showError("sorry you need to get the code")
         return
     end
 
@@ -151,7 +152,7 @@ end)
 
 TeamCheckButton.MouseButton1Click:Connect(function()
     if not keyEntered then
-        showError("Wrong code, try again")
+        showError("sorry you need to get the code")
         return
     end
 
@@ -223,6 +224,14 @@ RunService.RenderStepped:Connect(function()
 end)
 
 -- Section 7: Key System
+local universalKey = "randomkeyeasy"
+local specificKeys = {
+    ["Mrsfimfamp"] = "1",
+    ["Player2"] = "specifickey2",
+    ["Player3"] = "specifickey3",
+    -- Add more players and keys here
+}
+
 local KeySystemFrame = Instance.new("Frame")
 KeySystemFrame.Size = UDim2.new(0, 220, 0, 60)
 KeySystemFrame.Position = UDim2.new(0, 240, 0, 10)
@@ -232,18 +241,23 @@ KeySystemFrame.Parent = AimAssistGui
 local KeyTextBox = Instance.new("TextBox")
 KeyTextBox.Size = UDim2.new(0, 200, 0, 30)
 KeyTextBox.Position = UDim2.new(0, 10, 0, 10)
-KeyTextBox.PlaceholderText = "https://discord.gg/tfFEFXjV"
+KeyTextBox.PlaceholderText = "https://discord.gg/jypUYXYk"
 KeyTextBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 KeyTextBox.TextColor3 = Color3.fromRGB(0, 0, 0)
 KeyTextBox.Parent = KeySystemFrame
 
 local function checkKey()
     local key = KeyTextBox.Text
-    if key == "randomkeyeasy" then
+    local playerName = Players.LocalPlayer.Name
+
+    if key == universalKey then
+        keyEntered = true
+        KeySystemFrame:Destroy()
+    elseif specificKeys[playerName] == key then
         keyEntered = true
         KeySystemFrame:Destroy()
     else
-        showError("Wrong code, try again")
+        showError("not your code broke boy")
     end
 end
 
